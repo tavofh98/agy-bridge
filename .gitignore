@@ -1,0 +1,7 @@
+# La skill no genera estado: bridge.py escribe .agy_state/ en el proyecto activo,
+# nunca aqui. Esto es red de seguridad, no necesidad.
+__pycache__/
+*.pyc
+
+# Nunca versionar credenciales.
+.env
