@@ -37,16 +37,24 @@ STATE_DIR = None  # se fija en main() a partir del proyecto
 
 
 def has_pretooluse_hook(start_dir: pathlib.Path) -> bool:
-    """¿Hay un `.agents/hooks.json` utilizable en `start_dir` o en algun ancestro?
+    """¿Hay un `hooks.json` utilizable en el proyecto, en algun ancestro o en el global?
 
-    Replica la busqueda que hace agy al descubrir el workspace (CONTRATO_AGY §1).
+    Replica la busqueda que hace agy al descubrir el workspace (CONTRATO_AGY §1), mas
+    la configuracion global `~/.gemini/config/`, que aplica a todos los proyectos. En
+    cada raiz mira el `hooks.json` suelto y el de cada plugin (`plugins/<nombre>/`).
     Un JSON invalido cuenta como ausencia: agy cargaria cero hooks en silencio.
 
-    Comprueba la precondicion, no que agy haya cargado el hook. Solo informa; la
-    decision de correr sin el es de quien invoca.
+    Comprueba la precondicion, no que agy haya cargado el hook: un plugin desactivado
+    con `agy plugin disable` cuenta igual. Solo informa; la decision de correr sin el
+    es de quien invoca.
     """
-    for base in [start_dir, *start_dir.parents]:
-        candidate = base / ".agents" / "hooks.json"
+    roots = [base / ".agents" for base in [start_dir, *start_dir.parents]]
+    roots.append(pathlib.Path.home() / ".gemini" / "config")
+    candidates = []
+    for root in roots:
+        candidates.append(root / "hooks.json")
+        candidates.extend(sorted(root.glob("plugins/*/hooks.json")))
+    for candidate in candidates:
         if not candidate.is_file():
             continue
         try:
@@ -212,7 +220,8 @@ def main() -> int:
     # Solo informa. En headless nadie aprueba nada, asi que sin hook agy corre
     # con permisos totales; quien invoca decide si eso es aceptable aqui.
     if not has_pretooluse_hook(project):
-        print(f"[AGY_NO_GUARDIAN] No hay .agents/hooks.json en {project} ni en sus ancestros: "
+        print(f"[AGY_NO_GUARDIAN] No hay hooks.json (suelto ni de plugin) en el .agents/ de {project} "
+              "ni de sus ancestros, ni en ~/.gemini/config/: "
               "agy correrá sin hook, sin clasificador y sin captura previa.", file=sys.stderr)
 
     cmd = [

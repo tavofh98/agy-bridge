@@ -42,9 +42,10 @@ python ${CLAUDE_SKILL_DIR}/scripts/bridge.py --thread analisis < brief.txt
 
 `bridge.py` invoca `agy` en modo headless con `--dangerously-skip-permissions`, porque en
 headless no hay nadie que apruebe nada. El único freno es un hook `PreToolUse`, declarado en
-el `.agents/hooks.json` del proyecto o en un `hooks.json` global bajo `~/.gemini/config/`. La
-señal `[AGY_NO_GUARDIAN]` avisa cuando no hay ninguno, aunque solo comprueba el del proyecto:
-con un hook global puede avisar de más.
+el `.agents/` del proyecto o en `~/.gemini/config/`, ya sea en un `hooks.json` suelto o dentro
+de un plugin (`plugins/<nombre>/hooks.json`). La señal `[AGY_NO_GUARDIAN]` avisa cuando no hay
+ninguno. Comprueba que el archivo exista y declare un `PreToolUse`, no que `agy` lo haya
+cargado: un plugin desactivado cuenta igual.
 
 Eso gobierna cómo se redacta el brief: una vez enviado, `agy` no se detiene a pedir permiso a
 mitad de camino.
